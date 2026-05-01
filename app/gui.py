@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 from app.heatmap_view import HeatmapView
 from app.opengl_view import OpenGLView
+from sim.apparent_surface import estimate_apparent_surface
 from sim.led_model import LEDSpec
 from sim.r148 import R148_H_DEG
 from sim.report import save_all_outputs
@@ -97,9 +98,11 @@ class MainWindow(QMainWindow):
         form.addRow("LED選択", self.led_combo)
 
         self.led_count = self._spin(1, 64, 1, 2)
+        self.led_count.valueChanged.connect(self._update_apparent_surface_preview)
         form.addRow("LED個数", self.led_count)
 
         self.led_spacing = self._double_spin(0.0, 100.0, 0.1, 8.0, " mm")
+        self.led_spacing.valueChanged.connect(self._update_apparent_surface_preview)
         form.addRow("LED間隔", self.led_spacing)
 
         self.current_ma = self._double_spin(0.0, 1000.0, 1.0, 65.0, " mA")
@@ -122,13 +125,16 @@ class MainWindow(QMainWindow):
         form.addRow("レンズ位置", self.lens_position)
 
         self.diffuser_combo = QComboBox()
+        self.diffuser_combo.currentIndexChanged.connect(self._update_apparent_surface_preview)
         form.addRow("拡散板", self.diffuser_combo)
 
         self.apparent_width = self._double_spin(1.0, 300.0, 1.0, 60.0, " mm")
-        form.addRow("見かけ面 幅", self.apparent_width)
+        self.apparent_width.setEnabled(False)
+        form.addRow("見かけ面 幅(自動)", self.apparent_width)
 
         self.apparent_height = self._double_spin(1.0, 300.0, 1.0, 45.0, " mm")
-        form.addRow("見かけ面 高さ", self.apparent_height)
+        self.apparent_height.setEnabled(False)
+        form.addRow("見かけ面 高さ/径(自動)", self.apparent_height)
 
         self.ray_count = self._spin(1000, 1_000_000, 1000, 50_000)
         form.addRow("ray数", self.ray_count)
@@ -222,7 +228,7 @@ class MainWindow(QMainWindow):
 
         self.lens_combo.clear()
         for lens in self.lenses:
-            if lens.get("kind") in {"none", "thin_collimator", "spherical", "ideal_r148"}:
+            if lens.get("kind") in {"none", "thin_collimator", "spherical", "ideal_r148", "r148_lower_bound"}:
                 self.lens_combo.addItem(str(lens["name"]), str(lens["id"]))
 
         self.diffuser_combo.clear()
@@ -238,6 +244,39 @@ class MainWindow(QMainWindow):
                 return led
         return self.leds[0]
 
+    def _current_lens_spec(self) -> dict:
+        lens_id = self.lens_combo.currentData()
+        return next((dict(item) for item in self.lenses if item.get("id") == lens_id), {"id": "none", "name": "Lensなし"})
+
+    def _current_diffuser_spec(self) -> dict | None:
+        diffuser_id = self.diffuser_combo.currentData()
+        if diffuser_id == "none":
+            return None
+        return next((dict(item) for item in self.lenses if item.get("id") == diffuser_id), None)
+
+    def _update_apparent_surface_preview(self) -> None:
+        if not self.leds or self.led_combo.count() == 0:
+            return
+        try:
+            surface = estimate_apparent_surface(
+                self._current_led(),
+                self.led_count.value(),
+                self.led_spacing.value(),
+                self._current_lens_spec(),
+                self._current_diffuser_spec(),
+            )
+        except Exception:
+            return
+        if surface.diameter_mm is not None:
+            self.apparent_width.setValue(surface.diameter_mm)
+            self.apparent_height.setValue(surface.diameter_mm)
+        elif surface.width_mm is not None and surface.height_mm is not None:
+            self.apparent_width.setValue(surface.width_mm)
+            self.apparent_height.setValue(surface.height_mm)
+        tip = f"{surface.area_cm2:.2f} cm2 / {surface.source}"
+        self.apparent_width.setToolTip(tip)
+        self.apparent_height.setToolTip(tip)
+
     def _on_led_changed(self) -> None:
         led = self._current_led()
         cfg = default_config_for_led(led)
@@ -248,6 +287,11 @@ class MainWindow(QMainWindow):
         self.directivity_deg.setValue(led.directivity_deg)
         default_spacing = max(led.package_mm[0] + 2.0, 8.0)
         self.led_spacing.setValue(default_spacing)
+        if led.id == "cree_xhp70b_00_0000_0d0bn440e":
+            idx = self.lens_combo.findData("cree_xhp70b_r148_lower_bound_60x45")
+            if idx >= 0:
+                self.lens_combo.setCurrentIndex(idx)
+        self._update_apparent_surface_preview()
 
     def _on_lens_changed(self) -> None:
         lens_id = self.lens_combo.currentData()
@@ -257,6 +301,7 @@ class MainWindow(QMainWindow):
         self.ideal_mode.setChecked(lens.get("kind") == "ideal_r148")
         if "position_mm" in lens:
             self.lens_position.setValue(float(lens["position_mm"]))
+        self._update_apparent_surface_preview()
 
     def _build_config(self) -> SimulationConfig:
         lens_id = str(self.lens_combo.currentData())
@@ -324,6 +369,13 @@ class MainWindow(QMainWindow):
         self.metric_labels["efficiency"].setText(f"{self.result.optical_efficiency * 100.0:.2f} %")
         self.metric_labels["source_flux"].setText(f"{self.result.source_flux_lm:.3f} lm")
         self.metric_labels["area"].setText(f"{ev.apparent_area_cm2:.2f} cm2 / 25-200 cm2")
+        self.metric_labels["area"].setToolTip(f"{self.result.apparent_surface.label} / {self.result.apparent_surface.source}")
+        if self.result.apparent_surface.diameter_mm is not None:
+            self.apparent_width.setValue(self.result.apparent_surface.diameter_mm)
+            self.apparent_height.setValue(self.result.apparent_surface.diameter_mm)
+        elif self.result.apparent_surface.width_mm is not None and self.result.apparent_surface.height_mm is not None:
+            self.apparent_width.setValue(self.result.apparent_surface.width_mm)
+            self.apparent_height.setValue(self.result.apparent_surface.height_mm)
 
         by_point = {(p.h_deg, p.v_deg): p for p in ev.points}
         display_v = [10.0, 5.0, 0.0, -5.0, -10.0]

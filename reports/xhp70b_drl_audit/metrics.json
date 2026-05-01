@@ -1,0 +1,23 @@
+{
+  "source_flux_lm": 33.06,
+  "exit_flux_nolens_lm": 33.06,
+  "nolens_i00_cd": 9.22548249081309,
+  "nolens_imax_cd": 18.776648180730504,
+  "nolens_pass": false,
+  "apparent_area_cm2": 27.0,
+  "area_passed": true,
+  "ideal_scale_1_i00_cd": 400.0,
+  "ideal_scale_1_grid_flux_lm": 33.4372352132184,
+  "ideal_scale_1756_i00_cd": 702.4,
+  "ideal_scale_1756_grid_flux_lm": 58.71578503441152,
+  "declared_ideal_exit_flux_lm": 26.448000000000004,
+  "center_cd_per_source_lm_required": 12.099213551119176,
+  "center_cd_per_exit_lm_required_80pct": 15.124016938898968,
+  "saved_ideal_cd_per_source_lm": 21.246218995765272,
+  "saved_ideal_cd_per_exit_lm": 26.55777374470659,
+  "elpara_32p42_diameter_area_cm2": 8.254977661871338,
+  "carclo10756_center_cd_at_20p3ma": 122.32200000000002,
+  "ledil_jenny40_center_cd_at_20p3ma": 56.202000000000005,
+  "ledil_flaremaxi_center_cd_at_20p3ma": 36.36600000000001,
+  "ledil_hbsqwww_center_cd_at_20p3ma": 13.224000000000002
+}

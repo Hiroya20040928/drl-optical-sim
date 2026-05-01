@@ -1,0 +1,44 @@
+{
+  "config": {
+    "led_id": "cree_xhp70b_00_0000_0d0bn440e",
+    "led_count": 1,
+    "led_spacing_mm": 9.0,
+    "current_ma": 20.3,
+    "flux_typ_lm": 1710.0,
+    "vf_typ_v": 12.0,
+    "directivity_deg": 125.0,
+    "lens_id": "ideal_r148_1p756",
+    "lens_position_mm": 10.0,
+    "diffuser_id": "none",
+    "apparent_width_mm": 60.0,
+    "apparent_height_mm": 45.0,
+    "ray_count": 52000,
+    "bin_deg": 1.0,
+    "h_range_min_deg": -30.0,
+    "h_range_max_deg": 30.0,
+    "v_range_min_deg": -20.0,
+    "v_range_max_deg": 20.0,
+    "preview_ray_count": 1200,
+    "random_seed": 20250501,
+    "ideal_mode": true,
+    "ideal_scale": 1.756,
+    "ideal_optical_efficiency": 0.8
+  },
+  "led": {
+    "id": "cree_xhp70b_00_0000_0d0bn440e",
+    "name": "CREE LED XHP70B-00-0000-0D0BN440E",
+    "flux_typ_lm": 1710.0,
+    "current_nominal_ma": 1050.0,
+    "vf_typ_v": 12.0,
+    "directivity_deg": 125.0,
+    "emitter_mm": [
+      7.0,
+      7.0
+    ],
+    "package_mm": [
+      7.0,
+      7.0,
+      4.34
+    ]
+  }
+}

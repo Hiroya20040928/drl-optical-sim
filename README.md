@@ -159,6 +159,14 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 
 実商品で通す場合も、このソフトの結果だけでBWSC提出適合とは言えません。完成灯体の実測配光、色度、見かけ発光面写真、取付図、certifying engineer確認が必要です。
 
+関連ファイル:
+
+- `optimized_cree_xhp70b_real_product/simulation_config.json`: 2 x 3主案の再現用設定
+- `configs/edge_cases/cree_xhp70b_c16369_2x2_edge_pass.json`: 2 x 2の見かけ面積ギリギリ適合設定
+- `docs/drl_product_links_budget.md`: 商品リンク、価格、概算予算
+- `cad/generated/`: LED/レンズの公開寸法ベース近似STEP
+- `cad/assembly/DRL_CREE_XHP70B_LEDiL_C16369_2x3_approx.step`: 2 x 3主案の近似アセンブリSTEP
+
 ## テスト
 
 ```powershell

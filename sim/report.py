@@ -32,11 +32,16 @@ def save_config(result: SimulationResult, path: str | Path) -> None:
             "area_cm2": result.apparent_surface.area_cm2,
             "label": result.apparent_surface.label,
             "source": result.apparent_surface.source,
+            "area_model": "sum_of_repeated_front_apertures"
+            if result.apparent_surface.unit_count > 1
+            else "single_front_aperture_or_bounding_box",
             "width_mm": result.apparent_surface.width_mm,
             "height_mm": result.apparent_surface.height_mm,
             "diameter_mm": result.apparent_surface.diameter_mm,
             "unit_count": result.apparent_surface.unit_count,
             "unit_label": result.apparent_surface.unit_label,
+            "array_envelope_width_mm": result.apparent_surface.width_mm if result.apparent_surface.unit_count > 1 else None,
+            "array_envelope_height_mm": result.apparent_surface.height_mm if result.apparent_surface.unit_count > 1 else None,
         },
     }
     Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

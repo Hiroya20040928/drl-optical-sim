@@ -78,6 +78,8 @@ GUIの「設定読込」から保存済みの `simulation_config.json` を読み
 "current_flux_curve": [[50, 12.0], [100, 25.0], [350, 100.0]]
 ```
 
+詳しい書式、全項目の意味、データシートから値を読むときの注意、テンプレートは `docs/led_preset_manual.md` を参照してください。
+
 ## レンズ仕様の追加方法
 
 `data/lenses.json` の `lenses` 配列に追加します。初版で使える `kind` は以下です。

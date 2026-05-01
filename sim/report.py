@@ -32,6 +32,11 @@ def save_config(result: SimulationResult, path: str | Path) -> None:
             "area_cm2": result.apparent_surface.area_cm2,
             "label": result.apparent_surface.label,
             "source": result.apparent_surface.source,
+            "width_mm": result.apparent_surface.width_mm,
+            "height_mm": result.apparent_surface.height_mm,
+            "diameter_mm": result.apparent_surface.diameter_mm,
+            "unit_count": result.apparent_surface.unit_count,
+            "unit_label": result.apparent_surface.unit_label,
         },
     }
     Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -99,10 +104,12 @@ def save_3d_preview_fallback_png(result: SimulationResult, path: str | Path) -> 
     """Save a lightweight x-z ray preview when no OpenGL framebuffer is available."""
     fig, ax = plt.subplots(figsize=(7.0, 4.5), dpi=150)
     cfg = result.config
+    surface = result.apparent_surface
+    surface_w = surface.diameter_mm or surface.width_mm or cfg.apparent_width_mm
     ax.add_patch(
         plt.Rectangle(
-            (-cfg.apparent_width_mm / 2.0, -1.0),
-            cfg.apparent_width_mm,
+            (-surface_w / 2.0, -1.0),
+            surface_w,
             2.0,
             color="#244d43",
             alpha=0.8,
@@ -156,7 +163,7 @@ def save_summary_report(result: SimulationResult, path: str | Path) -> None:
         lines.extend(
             [
                 "",
-                "> WARNING: This run used the energy-consistent R148 lower-bound freeform target. It is a minimum-power design target, not a purchasable certified lens or a substitute for measured photometry.",
+                "> WARNING: This run used the energy-consistent R148 lower-bound freeform target. It is NOT a real purchasable lens. It is a minimum-power design target, not a certified lamp or a substitute for measured photometry.",
             ]
         )
     lines.extend(

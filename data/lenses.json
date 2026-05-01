@@ -94,7 +94,7 @@
     },
     {
       "id": "cree_xhp70b_r148_lower_bound_60x45",
-      "name": "CREE XHP70B R148 lower-bound freeform target 60x45",
+      "name": "THEORETICAL target: CREE XHP70B R148 lower-bound 60x45 (not real lens)",
       "kind": "r148_lower_bound",
       "material": "custom_freeform_or_diffuser_target",
       "refractive_index": 1.49,
@@ -106,7 +106,7 @@
       "recommended_led_id": "cree_xhp70b_00_0000_0d0bn440e",
       "recommended_current_ma": 25.664545,
       "recommended_power_w": 0.308,
-      "notes": "Theoretical energy-consistent lower bound. It distributes all exit flux in the R148 RL minimum-map shape and is a design target for future freeform/TIR optics, not a purchasable certified lens."
+      "notes": "This is NOT a real purchasable lens. It is a theoretical energy-consistent lower bound. It distributes all exit flux in the R148 RL minimum-map shape and is a design target for future freeform/TIR optics, not a certified lamp or substitute for measured photometry."
     },
     {
       "id": "carclo_10756_xhp70p2",
@@ -121,6 +121,7 @@
       "position_mm": 12.0,
       "apparent_shape": "circle",
       "apparent_diameter_mm": 30.0,
+      "apparent_repeats_per_led": true,
       "peak_cd_per_lm": 3.7,
       "domestic_purchase": "DigiKey Japan/RS Japan route; stock and lead time must be checked at order time.",
       "notes": "Real product candidate with published XHP70.2 optical result: 85% efficiency, 24 deg FWHM, 3.7 cd/lm. At 20.3 mA it cannot reach 400 cd center."
@@ -140,6 +141,7 @@
       "apparent_shape": "rectangle",
       "apparent_width_mm": 35.0,
       "apparent_height_mm": 35.0,
+      "apparent_repeats_per_led": true,
       "peak_cd_per_lm": 1.7,
       "domestic_purchase": "Mouser Japan",
       "notes": "Real product candidate with published XHP70.2 optical result: 94% efficiency, 42 deg FWHM, 1.7 cd/lm. Apparent area is 12.25 cm2, below the 25 cm2 R148 RL condition unless a larger luminous front surface is added."
@@ -159,9 +161,32 @@
       "apparent_shape": "rectangle",
       "apparent_width_mm": 33.9,
       "apparent_height_mm": 33.3,
+      "apparent_repeats_per_led": true,
       "peak_cd_per_lm": 1.1,
       "domestic_purchase": "Mouser/TME route; stock and domestic procurement must be checked at order time.",
       "notes": "Real product candidate with published XHP70.2 optical result: 94% efficiency, 105+28 deg FWHM, 1.1 cd/lm. Center intensity is far below R148 RL at low current."
+    },
+    {
+      "id": "ledil_c16369_hb_sq_w_xhp70p2",
+      "name": "LEDiL C16369 HB-SQ-W 25x25 medium lens for XHP70.2",
+      "kind": "thin_collimator",
+      "material": "pmma",
+      "refractive_index": 1.49,
+      "transmission": 0.91,
+      "target_fwhm_deg": 65.0,
+      "input_fwhm_deg": 125.0,
+      "width_mm": 25.0,
+      "height_mm": 25.0,
+      "position_mm": 9.8,
+      "apparent_shape": "rectangle",
+      "apparent_width_mm": 25.0,
+      "apparent_height_mm": 25.0,
+      "apparent_repeats_per_led": true,
+      "peak_cd_per_lm": 0.8,
+      "domestic_purchase": "DigiKey Japan 711-1589-ND; stock and price must be checked at order time.",
+      "source_url": "https://www.digikey.jp/ja/products/detail/ledil/C16369-HB-SQ-W/9095514",
+      "datasheet_url": "https://www.ledil.com/data/prod/HighBay/16369/16369-ds.pdf",
+      "notes": "Real product candidate. DigiKey Japan lists a 25 mm x 25 mm acrylic lens, 53-65 deg viewing angle, one LED per optic. LEDiL datasheet gives XHP70.2 simulated data: 65 deg FWHM, 91% efficiency, 0.8 cd/lm peak intensity."
     }
   ]
 }

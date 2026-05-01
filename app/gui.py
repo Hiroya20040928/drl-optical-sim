@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from app.heatmap_view import HeatmapView
 from app.opengl_view import OpenGLView
 from sim.apparent_surface import estimate_apparent_surface
+from sim.config_io import load_simulation_config
 from sim.led_model import LEDSpec
 from sim.r148 import R148_H_DEG
 from sim.report import save_all_outputs
@@ -165,9 +166,12 @@ class MainWindow(QMainWindow):
         buttons = QHBoxLayout()
         self.run_button = QPushButton("計算実行")
         self.run_button.clicked.connect(self.run_clicked)
+        self.load_button = QPushButton("設定読込")
+        self.load_button.clicked.connect(self.load_clicked)
         self.save_button = QPushButton("結果保存")
         self.save_button.clicked.connect(self.save_clicked)
         buttons.addWidget(self.run_button)
+        buttons.addWidget(self.load_button)
         buttons.addWidget(self.save_button)
         layout.addLayout(buttons)
         layout.addStretch(1)
@@ -197,9 +201,12 @@ class MainWindow(QMainWindow):
             ("efficiency", "光学効率"),
             ("source_flux", "入力光束"),
             ("area", "見かけ面積"),
+            ("area_source", "見かけ面根拠"),
+            ("lens_warning", "レンズ注意"),
         ]:
             value = QLabel("-")
             value.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            value.setWordWrap(True)
             self.metric_labels[key] = value
             metrics_form.addRow(label, value)
         layout.addWidget(metrics)
@@ -266,6 +273,14 @@ class MainWindow(QMainWindow):
         if diffuser_id == "none":
             return None
         return next((dict(item) for item in self.lenses if item.get("id") == diffuser_id), None)
+
+    def _set_combo_data(self, combo: QComboBox, value: str, label: str) -> None:
+        idx = combo.findData(value)
+        if idx < 0:
+            raise ValueError(f"{label} not found in database: {value}")
+        previous = combo.blockSignals(True)
+        combo.setCurrentIndex(idx)
+        combo.blockSignals(previous)
 
     def _update_apparent_surface_preview(self) -> None:
         if not self.leds or self.led_combo.count() == 0:
@@ -352,6 +367,33 @@ class MainWindow(QMainWindow):
             ideal_mode=ideal,
         )
 
+    def _apply_config_to_widgets(self, config: SimulationConfig) -> None:
+        self._set_combo_data(self.led_combo, config.led_id, "LED")
+        self._set_combo_data(self.lens_combo, config.lens_id, "lens")
+        self._set_combo_data(self.diffuser_combo, config.diffuser_id, "diffuser")
+
+        self.led_count.setValue(config.led_count)
+        self.led_rows.setValue(config.led_rows)
+        self.led_cols.setValue(config.led_cols)
+        self.led_spacing.setValue(config.led_spacing_x_mm if config.led_spacing_x_mm is not None else config.led_spacing_mm)
+        self.led_spacing_y.setValue(config.led_spacing_y_mm if config.led_spacing_y_mm is not None else config.led_spacing_mm)
+        self.current_ma.setValue(config.current_ma)
+        if config.flux_typ_lm is not None:
+            self.flux_lm.setValue(config.flux_typ_lm)
+        if config.vf_typ_v is not None:
+            self.vf_v.setValue(config.vf_typ_v)
+        if config.directivity_deg is not None:
+            self.directivity_deg.setValue(config.directivity_deg)
+        if config.lens_position_mm is not None:
+            self.lens_position.setValue(config.lens_position_mm)
+        self.apparent_width.setValue(config.apparent_width_mm)
+        self.apparent_height.setValue(config.apparent_height_mm)
+        self.ray_count.setValue(config.ray_count)
+        self.bin_deg.setValue(config.bin_deg)
+        self.preview_rays.setValue(config.preview_ray_count)
+        self.ideal_mode.setChecked(config.ideal_mode)
+        self._update_apparent_surface_preview()
+
     def run_clicked(self) -> None:
         config = self._build_config()
         self.statusBar().showMessage("Calculating rays...")
@@ -373,6 +415,43 @@ class MainWindow(QMainWindow):
         self.heatmap.update_farfield(self.result.farfield)
         self.statusBar().showMessage("Done")
 
+    def load_clicked(self) -> None:
+        default_dir = Path.cwd() / "optimized_cree_xhp70b_real_product"
+        if not default_dir.exists():
+            default_dir = Path.cwd()
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "simulation_config.jsonを読み込む",
+            str(default_dir),
+            "JSON files (*.json);;All files (*)",
+        )
+        if not path:
+            return
+        cursor_set = False
+        try:
+            config = load_simulation_config(path)
+            self._apply_config_to_widgets(config)
+            self.statusBar().showMessage("Loaded config. Recalculating rays...")
+            self.run_button.setEnabled(False)
+            self.load_button.setEnabled(False)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            cursor_set = True
+            QApplication.processEvents()
+            self.result = run_simulation(self._build_config(), self.leds, self.lenses)
+        except Exception as exc:
+            QMessageBox.critical(self, "設定読込エラー", str(exc))
+            self.statusBar().showMessage("Load error")
+            return
+        finally:
+            if cursor_set:
+                QApplication.restoreOverrideCursor()
+            self.run_button.setEnabled(True)
+            self.load_button.setEnabled(True)
+        self._update_results()
+        self.opengl.set_result(self.result)
+        self.heatmap.update_farfield(self.result.farfield)
+        self.statusBar().showMessage(f"Loaded and recalculated: {path}")
+
     def _update_results(self) -> None:
         if self.result is None:
             return
@@ -384,7 +463,7 @@ class MainWindow(QMainWindow):
         if ideal:
             label = "IDEAL PASS" if passed else "IDEAL FAIL"
         elif lower_bound:
-            label = "TARGET PASS" if passed else "TARGET FAIL"
+            label = "THEORETICAL TARGET - NOT BWSC PROOF" if passed else "TARGET FAIL"
         else:
             label = "PASS" if passed else "FAIL"
         self.pass_label.setText(label)
@@ -405,6 +484,15 @@ class MainWindow(QMainWindow):
         self.metric_labels["source_flux"].setText(f"{self.result.source_flux_lm:.3f} lm")
         self.metric_labels["area"].setText(f"{ev.apparent_area_cm2:.2f} cm2 / 25-200 cm2")
         self.metric_labels["area"].setToolTip(f"{self.result.apparent_surface.label} / {self.result.apparent_surface.source}")
+        self.metric_labels["area_source"].setText(f"{self.result.apparent_surface.label} / {self.result.apparent_surface.source}")
+        self.metric_labels["lens_warning"].setText("-")
+        if lower_bound:
+            self.metric_labels["area"].setText(f"{ev.apparent_area_cm2:.2f} cm2 / theoretical front aperture")
+            self.metric_labels["lens_warning"].setText(
+                "このレンズは実在商品ではなく理論ターゲットです。BWSC提出には実レンズ/実測/CE確認が必要です。"
+            )
+        elif ideal:
+            self.metric_labels["lens_warning"].setText("理想配光モードです。実レンズの適合根拠にはなりません。")
         if self.result.apparent_surface.diameter_mm is not None:
             self.apparent_width.setValue(self.result.apparent_surface.diameter_mm)
             self.apparent_height.setValue(self.result.apparent_surface.diameter_mm)

@@ -15,9 +15,13 @@ class ApparentSurface:
     width_mm: float | None = None
     height_mm: float | None = None
     diameter_mm: float | None = None
+    unit_count: int = 1
+    unit_label: str | None = None
 
     @property
     def label(self) -> str:
+        if self.unit_count > 1 and self.unit_label:
+            return f"{self.unit_count} x {self.unit_label} = {self.area_cm2:.2f} cm2"
         if self.shape == "circle" and self.diameter_mm is not None:
             return f"circle dia {self.diameter_mm:.2f} mm"
         if self.width_mm is not None and self.height_mm is not None:
@@ -47,6 +51,36 @@ def _surface_from_spec(spec: dict[str, Any], source: str) -> ApparentSurface | N
     return None
 
 
+def _repeat_surface(
+    surface: ApparentSurface,
+    count: int,
+    rows: int,
+    cols: int,
+    spacing_x_mm: float,
+    spacing_y_mm: float,
+) -> ApparentSurface:
+    if count <= 1:
+        return surface
+
+    unit_width = surface.diameter_mm or surface.width_mm
+    unit_height = surface.diameter_mm or surface.height_mm
+    envelope_width = None
+    envelope_height = None
+    if unit_width is not None and unit_height is not None:
+        envelope_width = unit_width + max(0, cols - 1) * spacing_x_mm
+        envelope_height = unit_height + max(0, rows - 1) * spacing_y_mm
+
+    return ApparentSurface(
+        f"multi_{surface.shape}",
+        surface.area_cm2 * count,
+        f"{surface.source}; repeated one optic per LED",
+        width_mm=envelope_width,
+        height_mm=envelope_height,
+        unit_count=count,
+        unit_label=surface.label,
+    )
+
+
 def estimate_apparent_surface(
     led: LEDSpec,
     led_count: int,
@@ -63,6 +97,11 @@ def estimate_apparent_surface(
     bounding box. This removes the previous R148 area pass/fail dependency on
     arbitrary GUI-entered dimensions.
     """
+    cols = int(led_cols or led_count)
+    rows = int(led_rows)
+    effective_count = max(1, rows * cols)
+    spacing_y = float(led_spacing_mm if led_spacing_y_mm is None else led_spacing_y_mm)
+
     if diffuser_spec is not None and diffuser_spec.get("id") != "none":
         surface = _surface_from_spec(diffuser_spec, f"diffuser/front cover: {diffuser_spec.get('name', diffuser_spec.get('id'))}")
         if surface is not None:
@@ -71,11 +110,10 @@ def estimate_apparent_surface(
     if lens_spec.get("id") != "none":
         surface = _surface_from_spec(lens_spec, f"lens/front aperture: {lens_spec.get('name', lens_spec.get('id'))}")
         if surface is not None:
+            if lens_spec.get("apparent_repeats_per_led"):
+                return _repeat_surface(surface, effective_count, rows, cols, float(led_spacing_mm), spacing_y)
             return surface
 
-    cols = int(led_cols or led_count)
-    rows = int(led_rows)
-    spacing_y = float(led_spacing_mm if led_spacing_y_mm is None else led_spacing_y_mm)
     width = led.package_mm[0] + max(0, cols - 1) * float(led_spacing_mm)
     height = led.package_mm[1] + max(0, rows - 1) * spacing_y
     return ApparentSurface("rectangle", width * height / 100.0, "bare LED package bounding box", width_mm=width, height_mm=height)

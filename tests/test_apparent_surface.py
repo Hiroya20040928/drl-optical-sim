@@ -34,3 +34,22 @@ def test_optimized_cree_lower_bound_uses_front_aperture_area():
     assert result.farfield.center_intensity_cd >= 400.0
     assert result.r148.overall_passed
 
+
+def test_repeated_single_led_lenses_scale_apparent_area_with_layout():
+    config = SimulationConfig(
+        led_id="cree_xhp70b_00_0000_0d0bn440e",
+        led_count=6,
+        led_rows=2,
+        led_cols=3,
+        led_spacing_mm=28.0,
+        led_spacing_x_mm=28.0,
+        led_spacing_y_mm=28.0,
+        current_ma=20.0,
+        lens_id="ledil_c16369_hb_sq_w_xhp70p2",
+        ray_count=1000,
+    )
+    result = run_simulation(config)
+    assert result.apparent_surface.area_cm2 == pytest.approx(37.5)
+    assert result.r148.apparent_area_cm2 == pytest.approx(37.5)
+    assert result.r148.area_passed
+    assert "6 x 25.00 x 25.00 mm" in result.apparent_surface.label

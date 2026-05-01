@@ -50,6 +50,8 @@ GUIの「結果保存」から以下を保存できます。
 - `3d_view.png`
 - `summary_report.md`
 
+GUIの「設定読込」から保存済みの `simulation_config.json` を読み込むと、LED、配置、電流、レンズ、ray数などを入力欄へ復元し、その条件で再計算して3D表示と配光ヒートマップを再現できます。`optimized_cree_xhp70b_real_product/simulation_config.json` を読み込むと、CREE XHP70B + LEDiL C16369 HB-SQ-Wの実商品レンズ最適化条件をそのまま再表示できます。
+
 ## LED仕様の追加方法
 
 `data/leds.json` の `leds` 配列に項目を追加します。
@@ -129,7 +131,7 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 
 ## CREE XHP70B最小電力ターゲット
 
-`CREE LED XHP70B-00-0000-0D0BN440E` には、R148 RL最小配光をエネルギー整合させた理論下限ターゲット `CREE XHP70B R148 lower-bound freeform target 60x45` を追加しています。これは実商品レンズではなく、将来のfreeform/TIR/拡散前面設計が到達すべき最低電力側の目標です。
+`CREE LED XHP70B-00-0000-0D0BN440E` には、R148 RL最小配光をエネルギー整合させた理論下限ターゲット `THEORETICAL target: CREE XHP70B R148 lower-bound 60x45 (not real lens)` を追加しています。これは実商品レンズではなく、将来のfreeform/TIR/拡散前面設計が到達すべき最低電力側の目標です。
 
 - default current: `25.664545 mA`
 - electrical power estimate: `12.0 V * 25.664545 mA = 0.308 W`
@@ -138,7 +140,24 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 - exit flux: `33.438 lm`
 - apparent surface: `60 mm x 45 mm = 27.0 cm2`
 
-国内購入可能な実レンズ候補として、Carclo 10756、LEDiL F15539 JENNY-40、LEDiL C12868 FLARE-MAXIも登録しています。ただし公開cd/lmから見る限り、XHP70Bを25 mA級でR148 RLへ完全適合させる証拠にはなりません。実商品で通す場合は、完成灯体の実測配光が必要です。
+国内購入可能な実レンズ候補として、Carclo 10756、LEDiL F15539 JENNY-40、LEDiL C12868 FLARE-MAXI、LEDiL C16369 HB-SQ-Wも登録しています。
+2026-05-01時点の実商品レンズ最適化では、DigiKey Japanで購入可能なLEDiL C16369 HB-SQ-Wを1 LEDあたり1個使う2行3列構成を主案にしました。
+
+- LED count: `6`
+- layout: `2 x 3`, `28 mm` pitch
+- lens: `ledil_c16369_hb_sq_w_xhp70p2`
+- current: `19.866463 mA/LED`
+- electrical power estimate: `1.430385 W` per DRL lamp
+- source flux: `194.124 lm`
+- exit flux: `154.523 lm`
+- `I(0,0)`: `437.83 cd`
+- `Imax`: `461.01 cd`
+- apparent surface: `6 x 25 mm x 25 mm = 37.50 cm2`
+- result: built-in R148 RL numerical check `PASS`
+
+見かけ発光面は、選択した光学系の前面開口または拡散板で決まります。共通の大きい前面レンズ・拡散板なら、LED個数や配置を変えても見かけ面積はその前面部品で決まります。一方、C16369のように「1 LEDに1個の独立レンズ」を複数並べる実商品では、`apparent_repeats_per_led: true` によりレンズ前面面積をLED個数分合算します。`Lensなし` の場合は裸LEDパッケージ配列の外形から見かけ面積が変わります。
+
+実商品で通す場合も、このソフトの結果だけでBWSC提出適合とは言えません。完成灯体の実測配光、色度、見かけ発光面写真、取付図、certifying engineer確認が必要です。
 
 ## テスト
 

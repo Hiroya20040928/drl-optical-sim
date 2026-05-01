@@ -1,0 +1,340 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{caption}
+
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+\setCJKmainfont{Yu Gothic}
+\setCJKsansfont{Yu Gothic}
+\setCJKmonofont{Yu Gothic}
+\emergencystretch=3em
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\captionsetup{font=small}
+\graphicspath{{figures/}}
+
+\newcommand{\pass}{\textcolor{green!45!black}{PASS}}
+\newcommand{\fail}{\textcolor{red!70!black}{FAIL}}
+\newcommand{\warn}{\textcolor{orange!80!black}{要実測}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{BWSC 2025 DRL\\実商品レンズ選定・低消費電力最適化報告書}
+\author{\code{drl-optical-sim} real-product optimization}
+\date{2026-05-01}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fcolorbox{green!45!black}{green!4}{
+\begin{minipage}{0.92\linewidth}
+\textbf{結論。}
+CREE LED \code{XHP70B-00-0000-0D0BN440E} と、国内購入可能な実商品レンズ LEDiL \code{C16369\_HB-SQ-W} を1 LEDにつき1個使う構成を選定した。
+設計検討上の主案は、片側DRL 1灯あたりLED 6個、レンズ6個、2行3列、LED電流19.866 mA/LEDである。
+100万ray Monte Carlo計算では、R148 category RL相当の測定点、最大光度1200 cd以下、見かけ面積25--200 cm\textsuperscript{2}の全項目で \pass{} となった。
+片側1灯の電力は約1.430 W、左右2灯合計は約2.861 Wである。
+
+ただし、これは認証試験結果ではない。BWSC提出には、完成灯体の実測フォトメトリ、色度測定、取付図、放熱確認、certifying engineer確認が必要である。
+\end{minipage}}
+\end{center}
+
+\section{対象とした設計}
+本報告書は、\code{E:\textbackslash drl-optical-sim\textbackslash optimized\_cree\_xhp70b\_real\_product} に保存した最新計算を対象にする。
+同じ出力は \code{E:\textbackslash drl-optical-sim\textbackslash tests\textbackslash latest} にも同期した。
+
+\begin{longtable}{p{0.34\linewidth}p{0.56\linewidth}}
+\toprule
+項目 & 採用値 \\
+\midrule
+LED & CREE LED \code{XHP70B-00-0000-0D0BN440E} \\
+LED個数 & 片側DRL 1灯あたり6個 \\
+配置 & 2行3列、中心間隔28.0 mm \\
+駆動電流 & 19.866463 mA/LED \\
+代表Vf & 12.0 V \\
+片側1灯の総電流 & 119.198779 mA \\
+片側1灯の消費電力 & 1.430385 W \\
+左右2灯合計電力 & 2.860771 W \\
+レンズ & LEDiL \code{C16369\_HB-SQ-W}、LED 1個につき1個 \\
+レンズ位置 & 9.8 mm \\
+拡散板 & なし \\
+ray数 & 1,000,000 \\
+乱数seed & 20260501 \\
+\bottomrule
+\end{longtable}
+
+\section{実商品レンズの選定}
+\subsection{採用レンズ}
+採用したレンズは LEDiL \code{C16369\_HB-SQ-W} である。
+DigiKey Japan の製品ページでは、メーカー品番 \code{C16369\_HB-SQ-W}、DigiKey品番 \code{711-1589-ND}、25 mm x 25 mmの正方形レンズ、LED数1、視野角53--65度、材料アクリル、在庫表示あり、JPY価格表示ありとなっている。
+同ページは日本向け配送と日本円決済のページであり、2026-05-01時点で国内から通常の電子部品購買ルートとして発注可能と判断した。
+
+LEDiLのデータシートでは、XHP70.2との組み合わせに対し、FWHM 65.0度、効率91\%、Peak intensity 0.8 cd/lm、LEDs/each optic 1の光学結果が示されている。
+本シミュレータでは、この実商品データを薄肉コリメータ近似の入力値として使った。
+
+\subsection{採用理由}
+R148 RLは中心だけ明るいスポットではなく、左右20度、上下10度まで最低光度を要求する。
+狭角レンズは中心光度を稼ぎやすいが、周辺測定点を満たすために総光束を増やすと最大光度1200 cdを超えやすい。
+一方、広すぎるレンズは最大光度には有利だが、400 cd中心値を得るのに電力が増える。
+\code{C16369\_HB-SQ-W} の65度級配光は、今回のCREE XHP70Bの125度LEDに対して、中心値と周辺点のバランスがよかった。
+
+\begin{longtable}{p{0.27\linewidth}p{0.17\linewidth}p{0.17\linewidth}p{0.26\linewidth}}
+\toprule
+候補 & 主な仕様 & 探索結果 & 採否理由 \\
+\midrule
+LEDiL C16369 HB-SQ-W & 25 x 25 mm、65度級、91\%、1 LED/optic & \pass{} & 低電力、最大光度に余裕、国内DigiKeyで入手可能。採用。 \\
+Carclo 10756 & 30 mm、24度級、85\% & 条件付き\pass{} & 単体では狭すぎる。拡散板併用で通るが、部品点数と損失が増える。 \\
+LEDiL JENNY-40 & 35 x 35 mm、42度級、94\% & 条件付き\pass{} & 拡散板併用で通るが、C16369より電力が増えた。 \\
+LEDiL FLARE-MAXI & 33.9 x 33.3 mm、105度級、94\% & 探索下位 & 配光が広く、中心400 cd確保の電力が増える。 \\
+理論freeformターゲット & 実商品ではない & 除外 & 今回は国内購入可能な実商品に限定したため候補から外した。 \\
+\bottomrule
+\end{longtable}
+
+\section{見かけ発光面の扱い}
+ユーザー指摘の通り、見かけ発光面は任意入力値ではなく、完成した灯体の前面で実際に光って見える部分によって決まる。
+本シミュレータは、前面拡散板がある場合は拡散板、独立レンズを使う場合はレンズ前面、レンズなしの場合はLEDパッケージ配列外形から自動計算するように修正した。
+
+今回の主案は、LED 1個に対して25 mm x 25 mmレンズを1個ずつ使う。
+したがって片側1灯の見かけ発光面積は次式で計算する。
+\[
+A_\mathrm{app}
+= N_\mathrm{lens} \times \frac{25~\mathrm{mm}\times25~\mathrm{mm}}{100}
+= 6 \times 6.25
+= 37.50~\mathrm{cm^2}
+\]
+これはR148 RL相当条件の25--200 cm\textsuperscript{2}に入る。
+2行3列、28 mmピッチの外接寸法は、横81 mm、縦53 mmである。
+ただし、実測で各レンズ全面が均一に光って見えず、見かけ発光面として認められる面積が小さくなる場合がある。
+その場合は、前面乳白カバーや導光板を追加し、実測写真とCAD断面で見かけ面の根拠を示す必要がある。
+
+\section{規則要求の整理}
+\subsection{BWSC 2025}
+BWSC 2025 Event Regulations V2の照明節では、競技車両に2個のdaytime running lampsが必要であり、DRLは白色であること、灯具はUNECE Regulation 148またはSAE/DOT相当へ適合すること、適合はマークまたは詳細文書とcertifying engineer確認で示すこと、DRLのUNECE categoryはRLであることが示されている。
+またDRLの取付条件として、前面に取り付け、左右DRLの見かけ面間距離、地上高、視認角度の要求がある。
+
+本報告書のシミュレーションが直接扱う範囲は、R148 RLの光度分布、最大光度、見かけ面積である。
+車両搭載位置、左右間隔、地上高、取付角、車体による遮蔽、色度は、この光学シミュレーション単体では未評価である。
+
+\subsection{UNECE R148 category RL}
+UNECE R148のdaytime running lamp RLでは、H-V方向の最小光度400 cd、任意方向の最大光度1200 cd、標準配光図A3-II、見かけ面積25--200 cm\textsuperscript{2}、白色光が要求される。
+本ソフトでは、ユーザー指定のR148 RL相当表を以下の絶対光度値として内蔵し、各測定点を数値配光からサンプリングした。
+
+\begin{center}
+\begin{tabular}{c|rrrrrrr}
+\toprule
+$v/h$ & -20 & -10 & -5 & 0 & +5 & +10 & +20 \\
+\midrule
++10 & 0 & 0 & 80 & 80 & 80 & 0 & 0 \\
++5 & 40 & 80 & 180 & 280 & 180 & 80 & 40 \\
+0 & 100 & 280 & 360 & 400 & 360 & 280 & 100 \\
+-5 & 40 & 80 & 180 & 280 & 180 & 80 & 40 \\
+-10 & 0 & 0 & 80 & 80 & 80 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{計算方法}
+\subsection{LED光束}
+初版モデルでは、LED光束を電流に対して線形近似する。
+\[
+\Phi_\mathrm{LED}(I)
+= \Phi_\mathrm{nom}\frac{I}{I_\mathrm{nom}}
+\]
+CREE XHP70Bの入力値は、$\Phi_\mathrm{nom}=1710~\mathrm{lm}$、$I_\mathrm{nom}=1050~\mathrm{mA}$である。
+主案の19.866463 mA/LEDでは、
+\[
+\Phi_\mathrm{LED}
+= 1710\frac{19.866463}{1050}
+= 32.354~\mathrm{lm/LED}
+\]
+\[
+\Phi_\mathrm{source}
+= 6 \times 32.354
+= 194.124~\mathrm{lm}
+\]
+したがって、この設定は「低電流でも1710 lmが出る」計算ではない。
+1710 lmは1050 mAでの公称値であり、今回の電流では1 LEDあたり約32.35 lmとして計算している。
+
+\subsection{LED指向特性}
+LEDの角度光度は、半値全角FWHMから求めたcosine-power分布で近似する。
+\[
+I(\theta)=I_0 \cos^n(\theta)
+\]
+FWHMが125度なら半値角は62.5度であり、
+\[
+n=\frac{\log(0.5)}{\log(\cos(62.5^\circ))}
+\]
+で指数を決める。
+Monte Carloでは発光面からrayを出し、各rayの光束重みを総光束/ray数で割り当てる。
+
+\subsection{レンズと損失}
+\code{C16369\_HB-SQ-W} は実商品であるが、本シミュレータ内では初版近似として薄肉コリメータモデルに置き換える。
+入力FWHM 125度のLED光を、レンズデータの65度級FWHMへ角度圧縮し、アクリル屈折率1.49、LEDiLデータシート効率91\%、簡易Fresnel損失を掛ける。
+今回の総合出射効率は、ray追跡結果で79.60\%であった。
+
+\subsection{遠方光度}
+遠方球面上の水平角$h$、垂直角$v$を1度ビンで集計する。
+各ビンの立体角は
+\[
+\Delta\Omega
+= (h_2-h_1)_\mathrm{rad}
+\left(\sin v_2-\sin v_1\right)
+\]
+であり、光束$\Delta\Phi$から光度を
+\[
+I = \frac{\Delta\Phi}{\Delta\Omega}
+\]
+として求める。
+R148測定点は、この2D光度マップから双一次補間でサンプリングする。
+OpenGL画面の明るさは合否判定に使用していない。
+
+\section{最適化結果}
+\subsection{候補比較}
+実商品レンズのみを対象に探索し、理論freeformターゲットは除外した。
+100万rayで再計算したC16369系の代表候補を表に示す。
+Monte Carloの揺らぎがあるため、1--2\%未満の差は物理的な優劣ではなく数値ノイズを含む。
+
+\begin{longtable}{rrrrrrr}
+\toprule
+配列 & LED数 & 電流[mA/LED] & 電力[W/灯] & 見かけ面積[cm\textsuperscript{2}] & $I(0,0)$[cd] & $I_\mathrm{max}$[cd] \\
+\midrule
+2x2 & 4 & 29.2401 & 1.4035 & 25.00 & 435.13 & 468.14 \\
+2x3 & 6 & 19.8665 & 1.4304 & 37.50 & 437.83 & 461.01 \\
+2x4 & 8 & 14.9213 & 1.4324 & 50.00 & 443.69 & 459.93 \\
+3x4 & 12 & 9.9001 & 1.4256 & 75.00 & 451.19 & 467.24 \\
+\bottomrule
+\end{longtable}
+
+数学的な下限だけを見ると2x2が最小電力である。
+しかし2x2は見かけ面積が25.00 cm\textsuperscript{2}ちょうどで、実製作時にレンズ端や遮光部を除外されると不合格側に落ちる可能性がある。
+このため、本報告書では、消費電力差が約0.027 W/灯に留まり、見かけ面積37.50 cm\textsuperscript{2}を確保できる2x3を主案とした。
+さらに部品点数を増やす3x4は、今回の線形LEDモデルでは実質的な電力低減がないため、主案から外した。
+
+\subsection{主案の合否}
+\begin{longtable}{rrrrr}
+\toprule
+$h$[deg] & $v$[deg] & 最小[cd] & 計算[cd] & 判定 \\
+\midrule
+-20 & -10 & 0 & 95.64 & \pass{} \\
+-10 & -10 & 0 & 207.11 & \pass{} \\
+-5 & -10 & 80 & 268.52 & \pass{} \\
+0 & -10 & 80 & 285.51 & \pass{} \\
+5 & -10 & 80 & 264.68 & \pass{} \\
+10 & -10 & 0 & 208.06 & \pass{} \\
+20 & -10 & 0 & 100.90 & \pass{} \\
+-20 & -5 & 40 & 107.51 & \pass{} \\
+-10 & -5 & 80 & 256.72 & \pass{} \\
+-5 & -5 & 180 & 352.08 & \pass{} \\
+0 & -5 & 280 & 390.93 & \pass{} \\
+5 & -5 & 180 & 351.95 & \pass{} \\
+10 & -5 & 80 & 272.72 & \pass{} \\
+20 & -5 & 40 & 111.51 & \pass{} \\
+-20 & 0 & 100 & 115.18 & \pass{} \\
+-10 & 0 & 280 & 280.00 & \pass{} \\
+-5 & 0 & 360 & 396.43 & \pass{} \\
+0 & 0 & 400 & 437.83 & \pass{} \\
+5 & 0 & 360 & 398.98 & \pass{} \\
+10 & 0 & 280 & 286.70 & \pass{} \\
+20 & 0 & 100 & 120.13 & \pass{} \\
+-20 & 5 & 40 & 109.92 & \pass{} \\
+-10 & 5 & 80 & 268.55 & \pass{} \\
+-5 & 5 & 180 & 355.98 & \pass{} \\
+0 & 5 & 280 & 398.35 & \pass{} \\
+5 & 5 & 180 & 364.05 & \pass{} \\
+10 & 5 & 80 & 256.98 & \pass{} \\
+20 & 5 & 40 & 105.76 & \pass{} \\
+-20 & 10 & 0 & 93.48 & \pass{} \\
+-10 & 10 & 0 & 210.50 & \pass{} \\
+-5 & 10 & 80 & 271.49 & \pass{} \\
+0 & 10 & 80 & 287.03 & \pass{} \\
+5 & 10 & 80 & 274.62 & \pass{} \\
+10 & 10 & 0 & 213.91 & \pass{} \\
+20 & 10 & 0 & 90.63 & \pass{} \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{p{0.36\linewidth}p{0.24\linewidth}p{0.22\linewidth}p{0.10\linewidth}}
+\toprule
+項目 & 計算値 & 条件 & 判定 \\
+\midrule
+$I(0,0)$ & 437.83 cd & 400 cd以上 & \pass{} \\
+$I_\mathrm{max}$ & 461.01 cd & 1200 cd以下 & \pass{} \\
+出射光束 & 154.52 lm & 参考値 & - \\
+光学効率 & 79.60\% & 参考値 & - \\
+見かけ面積 & 37.50 cm\textsuperscript{2} & 25--200 cm\textsuperscript{2} & \pass{} \\
+総合判定 & - & 内蔵R148 RL相当表 & \pass{} \\
+\bottomrule
+\end{longtable}
+
+\section{結果画像}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{heatmap.png}
+\caption{遠方配光ヒートマップ。合否判定はこの数値光度マップから行い、OpenGLの見た目の明るさは使わない。}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\linewidth]{3d_view.png}
+\caption{3D ray preview。LED、レンズ前面、rayの幾何確認用であり、規格判定値ではない。}
+\end{figure}
+
+\section{提出時に残る未証明項目}
+本報告書で \pass{} としたのは、シミュレータに内蔵したR148 RL相当の数値配光表、最大光度、見かけ面積だけである。
+BWSC提出用の「完全な適合証明」にするには、以下が必要である。
+
+\begin{itemize}
+\item 完成灯体の実測フォトメトリ: C16369実レンズ、実基板、実カバー、実ドライバ、実温度で測定する。
+\item 色度測定: DRL白色要求に対し、CREE 4000K品が実灯体状態で白色範囲に入ることを示す。
+\item 見かけ発光面の実証: 正面写真、CAD断面、遮光部の有無、レンズ全面が光って見えることを示す。
+\item 取付図: 左右DRL間隔、地上高、前面取付、10度上、10度下、20度内外の視認性を示す。
+\item 放熱: XHP70Bは低電流運用でもパワーLEDであり、基板温度と周囲温度条件を確認する。
+\item certifying engineer確認: BWSC規則が要求する確認書類としてまとめる。
+\end{itemize}
+
+\section{設計上の注意}
+今回の電流は非常に低く、1 LEDあたり約32.35 lmの計算である。
+これは1050 mA公称値の1710 lmを低電流でそのまま使う計算ではない。
+ただし、低電流域の実際の光束は線形より上下にずれる可能性があるため、最終版ではCREEのIF--$\Phi$曲線または実測データをJSONへ入れて再計算するべきである。
+
+また、LED直視は禁止、通電試験時は遮光と保護眼鏡を使う。
+パワーLEDは放熱必須であり、はんだ実装、絶縁、ドライバ電流制限、熱暴走防止を確認する。
+
+\section{参照情報}
+\begin{thebibliography}{9}
+\bibitem{bwsc2025}
+Bridgestone World Solar Challenge, \emph{2025 Event Regulations V2}, Lighting section 2.23, published 2024-10-28.
+\url{https://cms.worldsolarchallenge.org/app/uploads/2024/12/3297_2025_bwsc_regulations_release_v20_published_28_october_2024.pdf}
+
+\bibitem{r148}
+UNECE, \emph{UN Regulation No. 148 - Light Signalling Devices}.
+\url{https://unece.org/transport/documents/2021/05/standards/un-regulation-no-148-light-signalling-devices-lsd}
+
+\bibitem{r148am5}
+UN Regulation No. 148 amendment text, RL requirements table and apparent surface clause used for cross-check.
+\url{https://www.marklines.com/statics/unece/pdf_202310/R148am5e.pdf}
+
+\bibitem{ledil}
+LEDiL, \emph{C16369\_HB-SQ-W product datasheet}.
+\url{https://www.ledil.com/data/prod/HighBay/16369/16369-ds.pdf}
+
+\bibitem{digikeylens}
+DigiKey Japan, \emph{C16369\_HB-SQ-W Ledil lens product page}.
+\url{https://www.digikey.jp/ja/products/detail/ledil/C16369-HB-SQ-W/9095514}
+
+\bibitem{digikeyled}
+DigiKey, \emph{XHP70B-00-0000-0D0BN440E Cree LED product page}.
+\url{https://www.digikey.com/en/products/detail/cree-led/XHP70B-00-0000-0D0BN440E/6802073}
+\end{thebibliography}
+
+\end{document}

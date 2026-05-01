@@ -78,6 +78,7 @@ def optimize_cree_xhp70b(
         lens_ids
         or (
             "cree_xhp70b_r148_lower_bound_60x45",
+            "ledil_c16369_hb_sq_w_xhp70p2",
             "carclo_10756_xhp70p2",
             "ledil_f15539_jenny_40_xhp70p2",
             "ledil_c12868_flare_maxi_xhp70p2",

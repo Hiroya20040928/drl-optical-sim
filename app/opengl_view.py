@@ -133,7 +133,8 @@ class OpenGLView(QOpenGLWidget):
             return
         cfg = self.result.config
         led = self.result.led_spec
-        board_w = max(cfg.apparent_width_mm, abs(cfg.led_spacing_mm) * max(1, cfg.led_count - 1) + 18.0)
+        surface_w = self.result.apparent_surface.diameter_mm or self.result.apparent_surface.width_mm or cfg.apparent_width_mm
+        board_w = max(surface_w, abs(cfg.led_spacing_mm) * max(1, cfg.led_count - 1) + 18.0)
         board_h = max(24.0, led.package_mm[1] + 14.0)
         self._draw_rect_xy(0, 0, -0.9, board_w, board_h, (0.10, 0.22, 0.18, 1.0))
         positions = led_array_positions_mm(cfg.led_count, cfg.led_spacing_mm)
@@ -146,17 +147,20 @@ class OpenGLView(QOpenGLWidget):
             return
         cfg = self.result.config
         z = cfg.lens_position_mm if cfg.lens_position_mm is not None else 12.0
+        surface = self.result.apparent_surface
+        surface_w = surface.diameter_mm or surface.width_mm or cfg.apparent_width_mm
+        surface_h = surface.diameter_mm or surface.height_mm or cfg.apparent_height_mm
         if cfg.lens_id != "none" and not cfg.ideal_mode:
             glColor4f(0.42, 0.72, 1.0, 0.48)
             glBegin(GL_LINE_LOOP)
-            radius = 15.0
+            radius = min(surface_w, surface_h) / 2.0
             for i in range(80):
                 a = 2.0 * math.pi * i / 80.0
                 glVertex3f(math.cos(a) * radius, math.sin(a) * radius, z)
             glEnd()
         if cfg.diffuser_id != "none":
-            self._draw_rect_outline_xy(z + 6.0, cfg.apparent_width_mm, cfg.apparent_height_mm, (0.75, 0.95, 1.0, 0.8))
-        self._draw_rect_outline_xy(z + 10.0, cfg.apparent_width_mm, cfg.apparent_height_mm, (1.0, 0.78, 0.25, 0.75))
+            self._draw_rect_outline_xy(z + 6.0, surface_w, surface_h, (0.75, 0.95, 1.0, 0.8))
+        self._draw_rect_outline_xy(z + 10.0, surface_w, surface_h, (1.0, 0.78, 0.25, 0.75))
 
     def _draw_rays(self) -> None:
         if self.result is None or self.result.preview_rays is None:
@@ -199,4 +203,3 @@ class OpenGLView(QOpenGLWidget):
         self.makeCurrent()
         image = self.grabFramebuffer()
         image.save(str(path))
-

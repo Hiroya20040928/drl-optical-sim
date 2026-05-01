@@ -354,12 +354,21 @@ class MainWindow(QMainWindow):
         ev = self.result.r148
         passed = ev.overall_passed
         ideal = self.result.config.ideal_mode or self.result.config.lens_id == "ideal_r148_1p756"
-        self.pass_label.setText(("IDEAL PASS" if passed else "IDEAL FAIL") if ideal else ("PASS" if passed else "FAIL"))
+        lower_bound = self.result.config.lens_id == "cree_xhp70b_r148_lower_bound_60x45"
+        if ideal:
+            label = "IDEAL PASS" if passed else "IDEAL FAIL"
+        elif lower_bound:
+            label = "TARGET PASS" if passed else "TARGET FAIL"
+        else:
+            label = "PASS" if passed else "FAIL"
+        self.pass_label.setText(label)
         self.pass_label.setStyleSheet(
             "QLabel { font-size: 26px; font-weight: 700; padding: 8px; "
             + (
                 "background: #8a6d1f; color: white; }"
                 if ideal
+                else "background: #4b6f9e; color: white; }"
+                if lower_bound
                 else ("background: #167a3b; color: white; }" if passed else "background: #a22a2a; color: white; }")
             )
         )

@@ -152,6 +152,13 @@ def save_summary_report(result: SimulationResult, path: str | Path) -> None:
                 "> WARNING: This run used the ideal R148 target mode. The candela map is imposed from the R148 table and is not proof that the selected LED, current, and real lens can physically produce that distribution.",
             ]
         )
+    if result.config.lens_id == "cree_xhp70b_r148_lower_bound_60x45":
+        lines.extend(
+            [
+                "",
+                "> WARNING: This run used the energy-consistent R148 lower-bound freeform target. It is a minimum-power design target, not a purchasable certified lens or a substitute for measured photometry.",
+            ]
+        )
     lines.extend(
         [
             "",

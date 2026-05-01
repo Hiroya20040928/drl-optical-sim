@@ -12,6 +12,8 @@
 - Apparent area: 27.00 cm2
 - R148 category RL check: PASS
 
+> WARNING: This run used the energy-consistent R148 lower-bound freeform target. It is a minimum-power design target, not a purchasable certified lens or a substitute for measured photometry.
+
 ## R148 RL Measurement Points
 
 | h [deg] | v [deg] | min [cd] | simulated [cd] | result |

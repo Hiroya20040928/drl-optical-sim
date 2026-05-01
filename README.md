@@ -127,6 +127,19 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 
 実験用 `Akizuki OSW4XME1C1E-100` は、350 mA級で約100 lmのパワーLEDです。デフォルト電流は250 mAにしてあります。光束は大きい一方で、パッケージが大きく放熱要求も強いため、Nichia本番LEDとは発光面サイズ、熱設計、電流条件、色温度が異なります。
 
+## CREE XHP70B最小電力ターゲット
+
+`CREE LED XHP70B-00-0000-0D0BN440E` には、R148 RL最小配光をエネルギー整合させた理論下限ターゲット `CREE XHP70B R148 lower-bound freeform target 60x45` を追加しています。これは実商品レンズではなく、将来のfreeform/TIR/拡散前面設計が到達すべき最低電力側の目標です。
+
+- default current: `25.665 mA`
+- electrical power estimate: `12.0 V * 25.665 mA = 0.308 W`
+- source flux: `41.797 lm`
+- assumed optical efficiency: `80 %`
+- exit flux: `33.438 lm`
+- apparent surface: `60 mm x 45 mm = 27.0 cm2`
+
+国内購入可能な実レンズ候補として、Carclo 10756、LEDiL F15539 JENNY-40、LEDiL C12868 FLARE-MAXIも登録しています。ただし公開cd/lmから見る限り、XHP70Bを25 mA級でR148 RLへ完全適合させる証拠にはなりません。実商品で通す場合は、完成灯体の実測配光が必要です。
+
 ## テスト
 
 ```powershell

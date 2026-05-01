@@ -7,7 +7,7 @@
     "led_cols": 1,
     "led_spacing_x_mm": 9.0,
     "led_spacing_y_mm": 9.0,
-    "current_ma": 25.66454457154921,
+    "current_ma": 25.665,
     "flux_typ_lm": 1710.0,
     "vf_typ_v": 12.0,
     "directivity_deg": 125.0,

@@ -53,6 +53,9 @@ def estimate_apparent_surface(
     led_spacing_mm: float,
     lens_spec: dict[str, Any],
     diffuser_spec: dict[str, Any] | None = None,
+    led_rows: int = 1,
+    led_cols: int | None = None,
+    led_spacing_y_mm: float | None = None,
 ) -> ApparentSurface:
     """Estimate apparent luminous surface from the actual optical front element.
 
@@ -70,7 +73,9 @@ def estimate_apparent_surface(
         if surface is not None:
             return surface
 
-    width = led.package_mm[0] + max(0, int(led_count) - 1) * float(led_spacing_mm)
-    height = led.package_mm[1]
+    cols = int(led_cols or led_count)
+    rows = int(led_rows)
+    spacing_y = float(led_spacing_mm if led_spacing_y_mm is None else led_spacing_y_mm)
+    width = led.package_mm[0] + max(0, cols - 1) * float(led_spacing_mm)
+    height = led.package_mm[1] + max(0, rows - 1) * spacing_y
     return ApparentSurface("rectangle", width * height / 100.0, "bare LED package bounding box", width_mm=width, height_mm=height)
-

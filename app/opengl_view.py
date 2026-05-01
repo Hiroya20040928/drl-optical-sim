@@ -43,8 +43,7 @@ try:
 except Exception:
     OPENGL_AVAILABLE = False
 
-from sim.led_model import led_array_positions_mm
-from sim.sampler import SimulationResult
+from sim.sampler import SimulationResult, layout_positions_from_config
 
 
 class OpenGLView(QOpenGLWidget):
@@ -134,10 +133,10 @@ class OpenGLView(QOpenGLWidget):
         cfg = self.result.config
         led = self.result.led_spec
         surface_w = self.result.apparent_surface.diameter_mm or self.result.apparent_surface.width_mm or cfg.apparent_width_mm
-        board_w = max(surface_w, abs(cfg.led_spacing_mm) * max(1, cfg.led_count - 1) + 18.0)
-        board_h = max(24.0, led.package_mm[1] + 14.0)
+        positions = layout_positions_from_config(cfg)
+        board_w = max(surface_w, float(positions[:, 0].max() - positions[:, 0].min()) + led.package_mm[0] + 14.0)
+        board_h = max(24.0, float(positions[:, 1].max() - positions[:, 1].min()) + led.package_mm[1] + 14.0)
         self._draw_rect_xy(0, 0, -0.9, board_w, board_h, (0.10, 0.22, 0.18, 1.0))
-        positions = led_array_positions_mm(cfg.led_count, cfg.led_spacing_mm)
         for x, y, _ in positions:
             self._draw_rect_xy(float(x), float(y), 0.0, led.package_mm[0], led.package_mm[1], (0.92, 0.86, 0.56, 1.0))
             self._draw_rect_xy(float(x), float(y), 0.15, led.emitter_mm[0] * 0.55, led.emitter_mm[1] * 0.55, (1.0, 0.98, 0.72, 1.0))

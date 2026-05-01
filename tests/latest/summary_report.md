@@ -4,10 +4,10 @@
 - LED count: 1
 - Drive current: 25.7 mA
 - Source flux: 41.797 lm
-- Exit flux: 33.437 lm
+- Exit flux: 33.438 lm
 - Optical efficiency: 80.00 %
-- I(0,0): 400.00 cd
-- Imax: 400.00 cd
+- I(0,0): 400.01 cd
+- Imax: 400.01 cd
 - Apparent surface: 60.00 x 45.00 mm (lens/front aperture: CREE XHP70B R148 lower-bound freeform target 60x45)
 - Apparent area: 27.00 cm2
 - R148 category RL check: PASS
@@ -34,9 +34,9 @@
 | 20 | -5 | 40 | 40.00 | PASS |
 | -20 | 0 | 100 | 100.00 | PASS |
 | -10 | 0 | 280 | 280.00 | PASS |
-| -5 | 0 | 360 | 360.00 | PASS |
-| 0 | 0 | 400 | 400.00 | PASS |
-| 5 | 0 | 360 | 360.00 | PASS |
+| -5 | 0 | 360 | 360.01 | PASS |
+| 0 | 0 | 400 | 400.01 | PASS |
+| 5 | 0 | 360 | 360.01 | PASS |
 | 10 | 0 | 280 | 280.00 | PASS |
 | 20 | 0 | 100 | 100.00 | PASS |
 | -20 | 5 | 40 | 40.00 | PASS |

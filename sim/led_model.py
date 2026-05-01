@@ -140,6 +140,15 @@ def led_array_positions_mm(led_count: int, spacing_mm: float) -> np.ndarray:
     return np.column_stack([x, np.zeros(led_count), np.zeros(led_count)])
 
 
+def led_grid_positions_mm(rows: int, cols: int, spacing_x_mm: float, spacing_y_mm: float) -> np.ndarray:
+    if rows <= 0 or cols <= 0:
+        raise ValueError("rows and cols must be positive")
+    x = (np.arange(cols, dtype=float) - (cols - 1) / 2.0) * float(spacing_x_mm)
+    y = (np.arange(rows, dtype=float) - (rows - 1) / 2.0) * float(spacing_y_mm)
+    xx, yy = np.meshgrid(x, y)
+    return np.column_stack([xx.ravel(), yy.ravel(), np.zeros(rows * cols)])
+
+
 def _sample_cosine_power_directions(ray_count: int, exponent_n: float, rng: np.random.Generator) -> np.ndarray:
     u = rng.random(ray_count)
     phi = 2.0 * np.pi * rng.random(ray_count)
@@ -158,12 +167,14 @@ def emit_led_array(
     current_ma: float,
     ray_count: int,
     rng: np.random.Generator | None = None,
+    positions_mm: np.ndarray | None = None,
 ) -> RayBundle:
     """Sample rays from rectangular LED emitting surfaces."""
     if ray_count <= 0:
         raise ValueError("ray_count must be positive")
     rng = np.random.default_rng() if rng is None else rng
-    centers = led_array_positions_mm(led_count, spacing_mm)
+    centers = led_array_positions_mm(led_count, spacing_mm) if positions_mm is None else np.asarray(positions_mm, dtype=float)
+    led_count = int(centers.shape[0])
     counts = np.full(led_count, ray_count // led_count, dtype=int)
     counts[: ray_count % led_count] += 1
 
@@ -182,4 +193,3 @@ def emit_led_array(
         fluxes.append(np.full(count, flux_per_led / count, dtype=float))
 
     return RayBundle(np.vstack(origins), np.vstack(directions), np.concatenate(fluxes))
-

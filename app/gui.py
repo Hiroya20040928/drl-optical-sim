@@ -99,11 +99,24 @@ class MainWindow(QMainWindow):
 
         self.led_count = self._spin(1, 64, 1, 2)
         self.led_count.valueChanged.connect(self._update_apparent_surface_preview)
-        form.addRow("LED個数", self.led_count)
+        form.addRow("LED個数(1列時)", self.led_count)
+
+        self.led_rows = self._spin(1, 16, 1, 1)
+        self.led_rows.valueChanged.connect(self._update_apparent_surface_preview)
+        form.addRow("LED行数", self.led_rows)
+
+        self.led_cols = self._spin(0, 16, 1, 0)
+        self.led_cols.valueChanged.connect(self._update_apparent_surface_preview)
+        self.led_cols.setToolTip("0の場合は従来どおりLED個数の1列配置。1以上なら行数x列数を使用。")
+        form.addRow("LED列数", self.led_cols)
 
         self.led_spacing = self._double_spin(0.0, 100.0, 0.1, 8.0, " mm")
         self.led_spacing.valueChanged.connect(self._update_apparent_surface_preview)
-        form.addRow("LED間隔", self.led_spacing)
+        form.addRow("LED X間隔", self.led_spacing)
+
+        self.led_spacing_y = self._double_spin(0.0, 100.0, 0.1, 8.0, " mm")
+        self.led_spacing_y.valueChanged.connect(self._update_apparent_surface_preview)
+        form.addRow("LED Y間隔", self.led_spacing_y)
 
         self.current_ma = self._double_spin(0.0, 1000.0, 1.0, 65.0, " mA")
         form.addRow("駆動電流", self.current_ma)
@@ -264,6 +277,9 @@ class MainWindow(QMainWindow):
                 self.led_spacing.value(),
                 self._current_lens_spec(),
                 self._current_diffuser_spec(),
+                led_rows=self.led_rows.value() if self.led_cols.value() > 0 else 1,
+                led_cols=self.led_cols.value() if self.led_cols.value() > 0 else self.led_count.value(),
+                led_spacing_y_mm=self.led_spacing_y.value(),
             )
         except Exception:
             return
@@ -281,13 +297,19 @@ class MainWindow(QMainWindow):
         led = self._current_led()
         cfg = default_config_for_led(led)
         self.led_count.setValue(cfg.led_count)
+        self.led_rows.setValue(1)
+        self.led_cols.setValue(0)
         self.current_ma.setValue(cfg.current_ma)
         self.flux_lm.setValue(led.flux_typ_lm)
         self.vf_v.setValue(led.vf_typ_v)
         self.directivity_deg.setValue(led.directivity_deg)
         default_spacing = max(led.package_mm[0] + 2.0, 8.0)
         self.led_spacing.setValue(default_spacing)
+        self.led_spacing_y.setValue(default_spacing)
         if led.id == "cree_xhp70b_00_0000_0d0bn440e":
+            self.led_count.setValue(1)
+            self.led_rows.setValue(1)
+            self.led_cols.setValue(1)
             idx = self.lens_combo.findData("cree_xhp70b_r148_lower_bound_60x45")
             if idx >= 0:
                 self.lens_combo.setCurrentIndex(idx)
@@ -311,6 +333,10 @@ class MainWindow(QMainWindow):
             led_id=str(self.led_combo.currentData()),
             led_count=self.led_count.value(),
             led_spacing_mm=self.led_spacing.value(),
+            led_rows=self.led_rows.value(),
+            led_cols=self.led_cols.value(),
+            led_spacing_x_mm=self.led_spacing.value(),
+            led_spacing_y_mm=self.led_spacing_y.value(),
             current_ma=self.current_ma.value(),
             flux_typ_lm=self.flux_lm.value(),
             vf_typ_v=self.vf_v.value(),

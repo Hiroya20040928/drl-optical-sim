@@ -1,0 +1,4 @@
+lens_id,name,peak_cd_per_lm,apparent_area_cm2,area_ok,center_only_required_flux_lm,center_only_total_current_ma,center_only_power_w,domestic_purchase,note
+carclo_10756_xhp70p2,Carclo 10756 30mm narrow spot for XHP70.2,3.7,7.0685834705770345,False,108.1081081081081,66.38217164532954,0.7965860597439544,DigiKey Japan/RS Japan route; stock and lead time must be checked at order time.,center only; full R148 angle table not proven from peak cd/lm
+ledil_f15539_jenny_40_xhp70p2,LEDiL F15539 JENNY-40 for XHP70.2,1.7,12.25,False,235.29411764705884,144.47884416924666,1.7337461300309598,Mouser Japan,center only; full R148 angle table not proven from peak cd/lm
+ledil_c12868_flare_maxi_xhp70p2,LEDiL C12868 FLARE-MAXI for XHP70.2,1.1,11.288699999999999,False,363.6363636363636,223.28548644338116,2.679425837320574,Mouser/TME route; stock and domestic procurement must be checked at order time.,center only; full R148 angle table not proven from peak cd/lm

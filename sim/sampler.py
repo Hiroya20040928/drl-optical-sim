@@ -8,7 +8,7 @@ import numpy as np
 
 from .apparent_surface import ApparentSurface, estimate_apparent_surface
 from .farfield import FarFieldResult, accumulate_farfield
-from .led_model import LEDSpec, emit_led_array, load_leds_json
+from .led_model import LEDSpec, emit_led_array, led_grid_positions_mm, load_leds_json
 from .lens_models import lens_from_spec, load_lenses_json
 from .optics import OpticalSystem
 from .r148 import R148Evaluation, energy_limited_r148_farfield, evaluate_r148, ideal_r148_farfield
@@ -24,6 +24,10 @@ class SimulationConfig:
     led_id: str = "nichia_nf2w757h_v2h6_p12_5000k"
     led_count: int = 2
     led_spacing_mm: float = 8.0
+    led_rows: int = 1
+    led_cols: int = 0
+    led_spacing_x_mm: float | None = None
+    led_spacing_y_mm: float | None = None
     current_ma: float = 65.0
     flux_typ_lm: float | None = None
     vf_typ_v: float | None = None
@@ -102,6 +106,14 @@ def _build_optical_system(config: SimulationConfig, lens_db: list[dict[str, Any]
     return OpticalSystem(elements)
 
 
+def layout_positions_from_config(config: SimulationConfig) -> np.ndarray:
+    if config.led_cols > 0:
+        spacing_x = config.led_spacing_mm if config.led_spacing_x_mm is None else config.led_spacing_x_mm
+        spacing_y = config.led_spacing_mm if config.led_spacing_y_mm is None else config.led_spacing_y_mm
+        return led_grid_positions_mm(config.led_rows, config.led_cols, spacing_x, spacing_y)
+    return led_grid_positions_mm(1, config.led_count, config.led_spacing_mm, config.led_spacing_mm)
+
+
 def run_simulation(
     config: SimulationConfig,
     led_db: list[LEDSpec] | None = None,
@@ -114,7 +126,9 @@ def run_simulation(
         vf_typ_v=config.vf_typ_v,
         directivity_deg=config.directivity_deg,
     )
-    source_flux = led.flux_at_current(config.current_ma) * int(config.led_count)
+    positions = layout_positions_from_config(config)
+    effective_led_count = int(positions.shape[0])
+    source_flux = led.flux_at_current(config.current_ma) * effective_led_count
 
     lens_spec = _find_lens(lens_db, config.lens_id)
     diffuser_spec = _find_lens(lens_db, config.diffuser_id) if config.diffuser_id != "none" else None
@@ -124,6 +138,9 @@ def run_simulation(
         config.led_spacing_mm,
         lens_spec,
         diffuser_spec,
+        led_rows=config.led_rows if config.led_cols > 0 else 1,
+        led_cols=config.led_cols if config.led_cols > 0 else config.led_count,
+        led_spacing_y_mm=config.led_spacing_y_mm,
     )
 
     lens_kind = lens_spec.get("kind")
@@ -137,11 +154,12 @@ def run_simulation(
         optical_efficiency = farfield.phi_exit_lm / source_flux if source_flux > 0 else 0.0
         preview = emit_led_array(
             led,
-            config.led_count,
+            effective_led_count,
             config.led_spacing_mm,
             config.current_ma,
             min(config.preview_ray_count, max(1, config.ray_count)),
             np.random.default_rng(config.random_seed),
+            positions_mm=positions,
         )
         return SimulationResult(config, led, source_flux, farfield, r148, optical_efficiency, preview, apparent_surface)
 
@@ -152,22 +170,24 @@ def run_simulation(
         optical_efficiency = farfield.phi_exit_lm / source_flux if source_flux > 0 else 0.0
         preview = emit_led_array(
             led,
-            config.led_count,
+            effective_led_count,
             config.led_spacing_mm,
             config.current_ma,
             min(config.preview_ray_count, max(1, config.ray_count)),
             np.random.default_rng(config.random_seed),
+            positions_mm=positions,
         )
         return SimulationResult(config, led, source_flux, farfield, r148, optical_efficiency, preview, apparent_surface)
 
     rng = np.random.default_rng(config.random_seed)
     rays = emit_led_array(
         led,
-        config.led_count,
+        effective_led_count,
         config.led_spacing_mm,
         config.current_ma,
         int(config.ray_count),
         rng,
+        positions_mm=positions,
     )
     system = _build_optical_system(config, lens_db, led.directivity_deg)
     traced = system.trace(rays, rng)

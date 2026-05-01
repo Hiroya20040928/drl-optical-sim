@@ -131,8 +131,8 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 
 `CREE LED XHP70B-00-0000-0D0BN440E` には、R148 RL最小配光をエネルギー整合させた理論下限ターゲット `CREE XHP70B R148 lower-bound freeform target 60x45` を追加しています。これは実商品レンズではなく、将来のfreeform/TIR/拡散前面設計が到達すべき最低電力側の目標です。
 
-- default current: `25.665 mA`
-- electrical power estimate: `12.0 V * 25.665 mA = 0.308 W`
+- default current: `25.664545 mA`
+- electrical power estimate: `12.0 V * 25.664545 mA = 0.308 W`
 - source flux: `41.797 lm`
 - assumed optical efficiency: `80 %`
 - exit flux: `33.438 lm`

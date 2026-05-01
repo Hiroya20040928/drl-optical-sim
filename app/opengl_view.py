@@ -44,6 +44,8 @@ except Exception:
     OPENGL_AVAILABLE = False
 
 from sim.sampler import SimulationResult, layout_positions_from_config
+from sim.lens_models import load_lenses_json
+from sim.sampler import DATA_DIR
 
 
 class OpenGLView(QOpenGLWidget):
@@ -57,6 +59,7 @@ class OpenGLView(QOpenGLWidget):
         self.pan_x = 0.0
         self.pan_y = 0.0
         self.last_pos = QPoint()
+        self.lenses = load_lenses_json(DATA_DIR / "lenses.json")
 
     def set_result(self, result: SimulationResult | None) -> None:
         self.result = result
@@ -118,13 +121,64 @@ class OpenGLView(QOpenGLWidget):
         glEnd()
 
     def _draw_rect_outline_xy(self, z: float, w: float, h: float, color: tuple[float, float, float, float]) -> None:
+        self._draw_rect_outline_xy_at(0.0, 0.0, z, w, h, color)
+
+    def _draw_rect_outline_xy_at(
+        self,
+        cx: float,
+        cy: float,
+        z: float,
+        w: float,
+        h: float,
+        color: tuple[float, float, float, float],
+    ) -> None:
         glColor4f(*color)
         glBegin(GL_LINE_LOOP)
-        glVertex3f(-w / 2.0, -h / 2.0, z)
-        glVertex3f(w / 2.0, -h / 2.0, z)
-        glVertex3f(w / 2.0, h / 2.0, z)
-        glVertex3f(-w / 2.0, h / 2.0, z)
+        glVertex3f(cx - w / 2.0, cy - h / 2.0, z)
+        glVertex3f(cx + w / 2.0, cy - h / 2.0, z)
+        glVertex3f(cx + w / 2.0, cy + h / 2.0, z)
+        glVertex3f(cx - w / 2.0, cy + h / 2.0, z)
         glEnd()
+
+    def _draw_circle_outline_xy(
+        self,
+        cx: float,
+        cy: float,
+        z: float,
+        radius: float,
+        color: tuple[float, float, float, float],
+    ) -> None:
+        glColor4f(*color)
+        glBegin(GL_LINE_LOOP)
+        for i in range(80):
+            a = 2.0 * math.pi * i / 80.0
+            glVertex3f(cx + math.cos(a) * radius, cy + math.sin(a) * radius, z)
+        glEnd()
+
+    def _lens_spec(self) -> dict:
+        if self.result is None:
+            return {}
+        lens_id = self.result.config.lens_id
+        return next((dict(item) for item in self.lenses if item.get("id") == lens_id), {})
+
+    def _draw_aperture_from_spec(
+        self,
+        cx: float,
+        cy: float,
+        z: float,
+        spec: dict,
+        fallback_w: float,
+        fallback_h: float,
+        color: tuple[float, float, float, float],
+    ) -> None:
+        shape = spec.get("apparent_shape")
+        if shape == "circle" or "apparent_diameter_mm" in spec:
+            diameter = float(spec.get("apparent_diameter_mm", spec.get("diameter_mm", min(fallback_w, fallback_h))))
+            self._draw_circle_outline_xy(cx, cy, z, diameter / 2.0, color)
+            return
+        width = float(spec.get("apparent_width_mm", spec.get("width_mm", fallback_w)))
+        height = float(spec.get("apparent_height_mm", spec.get("height_mm", fallback_h)))
+        self._draw_rect_outline_xy_at(cx, cy, z, width, height, color)
 
     def _draw_board_and_leds(self) -> None:
         if self.result is None:
@@ -149,29 +203,57 @@ class OpenGLView(QOpenGLWidget):
         surface = self.result.apparent_surface
         surface_w = surface.diameter_mm or surface.width_mm or cfg.apparent_width_mm
         surface_h = surface.diameter_mm or surface.height_mm or cfg.apparent_height_mm
+        positions = layout_positions_from_config(cfg)
+        lens_spec = self._lens_spec()
         if cfg.lens_id != "none" and not cfg.ideal_mode:
-            glColor4f(0.42, 0.72, 1.0, 0.48)
-            glBegin(GL_LINE_LOOP)
-            radius = min(surface_w, surface_h) / 2.0
-            for i in range(80):
-                a = 2.0 * math.pi * i / 80.0
-                glVertex3f(math.cos(a) * radius, math.sin(a) * radius, z)
-            glEnd()
+            if lens_spec.get("apparent_repeats_per_led"):
+                unit_w = float(lens_spec.get("apparent_width_mm", lens_spec.get("width_mm", 25.0)))
+                unit_h = float(lens_spec.get("apparent_height_mm", lens_spec.get("height_mm", 25.0)))
+                for x, y, _ in positions:
+                    self._draw_rect_xy(float(x), float(y), z - 0.08, unit_w, unit_h, (0.25, 0.55, 0.90, 0.13))
+                    self._draw_aperture_from_spec(
+                        float(x),
+                        float(y),
+                        z,
+                        lens_spec,
+                        unit_w,
+                        unit_h,
+                        (0.42, 0.72, 1.0, 0.85),
+                    )
+                if surface_w is not None and surface_h is not None:
+                    self._draw_rect_outline_xy(z + 1.0, surface_w, surface_h, (0.42, 0.72, 1.0, 0.22))
+            else:
+                self._draw_aperture_from_spec(0.0, 0.0, z, lens_spec, surface_w, surface_h, (0.42, 0.72, 1.0, 0.85))
         if cfg.diffuser_id != "none":
             self._draw_rect_outline_xy(z + 6.0, surface_w, surface_h, (0.75, 0.95, 1.0, 0.8))
-        self._draw_rect_outline_xy(z + 10.0, surface_w, surface_h, (1.0, 0.78, 0.25, 0.75))
+        if surface.unit_count > 1 and lens_spec.get("apparent_repeats_per_led"):
+            for x, y, _ in positions:
+                self._draw_aperture_from_spec(
+                    float(x),
+                    float(y),
+                    z + 10.0,
+                    lens_spec,
+                    float(lens_spec.get("apparent_width_mm", 25.0)),
+                    float(lens_spec.get("apparent_height_mm", 25.0)),
+                    (1.0, 0.78, 0.25, 0.75),
+                )
+        else:
+            self._draw_rect_outline_xy(z + 10.0, surface_w, surface_h, (1.0, 0.78, 0.25, 0.75))
 
     def _draw_rays(self) -> None:
         if self.result is None or self.result.preview_rays is None:
             return
         rays = self.result.preview_rays
+        max_flux = float(rays.flux_lm.max()) if rays.count > 0 else 1.0
+        max_flux = max(max_flux, 1e-12)
         glLineWidth(1.0)
         glBegin(GL_LINES)
-        for origin, direction, alive in zip(rays.origins_mm, rays.directions, rays.alive):
+        for origin, direction, flux, alive in zip(rays.origins_mm, rays.directions, rays.flux_lm, rays.alive):
             if not alive:
                 continue
             end = origin + direction * 80.0
-            glColor4f(1.0, 0.86, 0.26, 0.22)
+            alpha = 0.08 + 0.24 * min(1.0, float(flux) / max_flux)
+            glColor4f(1.0, 0.86, 0.26, alpha)
             glVertex3f(float(origin[0]), float(origin[1]), float(origin[2]))
             glVertex3f(float(end[0]), float(end[1]), float(end[2]))
         glEnd()

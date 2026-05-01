@@ -167,6 +167,8 @@ BWSC提出には、実測フォトメトリ、色度測定、取付図、certify
 - `cad/generated/`: LED/レンズの公開寸法ベース近似STEP
 - `cad/assembly/DRL_CREE_XHP70B_LEDiL_C16369_2x3_approx.step`: 2 x 3主案の近似アセンブリSTEP
 
+OpenGL表示では、`apparent_repeats_per_led: true` のレンズをLED配列位置ごとに描画します。C16369の2 x 3主案では、25 mm x 25 mmレンズ6枚とLED 6個が表示されます。rayは全LEDから発生した数値rayのプレビューで、各rayの光束重みに応じて透明度を変えています。ただし合否判定はOpenGLの見た目ではなく、CSVに出る数値光度のみで行います。
+
 ## テスト
 
 ```powershell

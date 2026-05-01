@@ -11,7 +11,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from .r148 import DISCLAIMER
-from .sampler import SimulationResult
+from .sampler import SimulationResult, layout_positions_from_config, load_default_lenses
 
 
 def save_config(result: SimulationResult, path: str | Path) -> None:
@@ -111,6 +111,8 @@ def save_3d_preview_fallback_png(result: SimulationResult, path: str | Path) -> 
     cfg = result.config
     surface = result.apparent_surface
     surface_w = surface.diameter_mm or surface.width_mm or cfg.apparent_width_mm
+    positions = layout_positions_from_config(cfg)
+    lens = next((item for item in load_default_lenses() if item.get("id") == cfg.lens_id), {})
     ax.add_patch(
         plt.Rectangle(
             (-surface_w / 2.0, -1.0),
@@ -121,17 +123,39 @@ def save_3d_preview_fallback_png(result: SimulationResult, path: str | Path) -> 
             label="board/front reference",
         )
     )
+    if cfg.lens_id != "none" and lens.get("apparent_repeats_per_led"):
+        unit_w = float(lens.get("apparent_width_mm", lens.get("width_mm", 25.0)))
+        for x, y, _ in positions:
+            z = cfg.lens_position_mm if cfg.lens_position_mm is not None else 12.0
+            ax.plot([float(x) - unit_w / 2.0, float(x) + unit_w / 2.0], [z, z], color="#64b5f6", linewidth=1.1, alpha=0.85)
+    elif cfg.lens_id != "none":
+        ax.add_patch(
+            plt.Rectangle(
+                (-surface_w / 2.0, -1.0),
+                surface_w,
+                2.0,
+                fill=False,
+                edgecolor="#64b5f6",
+                linewidth=1.1,
+                alpha=0.85,
+            )
+        )
     if result.preview_rays is not None:
         rays = result.preview_rays
-        for origin, direction, alive in zip(rays.origins_mm, rays.directions, rays.alive):
+        max_flux = max(float(rays.flux_lm.max()), 1e-12) if rays.count > 0 else 1.0
+        for origin, direction, flux, alive in zip(rays.origins_mm, rays.directions, rays.flux_lm, rays.alive):
             if not alive:
                 continue
             end = origin + direction * 80.0
-            ax.plot([origin[0], end[0]], [origin[2], end[2]], color="#f1c232", alpha=0.18, linewidth=0.6)
+            alpha = 0.06 + 0.22 * min(1.0, float(flux) / max_flux)
+            ax.plot([origin[0], end[0]], [origin[2], end[2]], color="#f1c232", alpha=alpha, linewidth=0.6)
     ax.set_xlabel("x [mm]")
     ax.set_ylabel("z [mm]")
     ax.set_title("Ray preview (OpenGL fallback)")
     ax.set_aspect("equal", adjustable="box")
+    half_width = max(surface_w * 0.7, 55.0)
+    ax.set_xlim(-half_width, half_width)
+    ax.set_ylim(-6.0, 90.0)
     ax.grid(True, alpha=0.25)
     fig.tight_layout()
     fig.savefig(path)
